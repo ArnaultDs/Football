@@ -1,0 +1,13 @@
+# football_dbt/profiles/profiles.yml
+football_dbt:                  # doit correspondre à profile: dans dbt_project.yml
+  target: prod
+  outputs:
+    prod:
+      type: postgres
+      host: postgres           # nom du service Postgres dans le docker-compose
+      port: 5432               # port interne, pas celui exposé sur ton Mac
+      user: "{{ env_var('POSTGRES_USER') }}"
+      pass: "{{ env_var('POSTGRES_PASSWORD') }}"
+      dbname: "{{ env_var('POSTGRES_DB') }}"
+      schema: analytics
+      threads: 4

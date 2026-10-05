@@ -1,0 +1,88 @@
+# =============================================================================
+# Secrets & configuration locale
+# =============================================================================
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# =============================================================================
+# Python
+# =============================================================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Environnements virtuels
+.venv/
+venv/
+env/
+
+# Packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+
+# Outils de qualité / tests
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.pyright/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+
+# Notebooks
+.ipynb_checkpoints/
+
+# =============================================================================
+# Airflow
+# =============================================================================
+airflow/logs/
+airflow/config/airflow.cfg
+airflow/config/webserver_config.py
+airflow/plugins/__pycache__/
+airflow-webserver.pid
+standalone_admin_password.txt
+logs/
+
+# =============================================================================
+# dbt
+# =============================================================================
+football_dbt/target/
+football_dbt/dbt_packages/
+football_dbt/logs/
+football_dbt/profiles/.user.yml
+# package-lock.yml est volontairement versionné (fige les versions des packages)
+
+# =============================================================================
+# Données locales (ne jamais versionner de données)
+# =============================================================================
+data/
+*.parquet
+*.csv
+*.duckdb
+*.db
+*.sqlite
+*.sqlite3
+
+# =============================================================================
+# IDE & OS
+# =============================================================================
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+._*
+__MACOSX/
+Thumbs.db
+desktop.ini

@@ -1,0 +1,12 @@
+version: 2
+
+sources: 
+  - name: raw
+    schema: raw
+    tables: 
+      - name: leagues
+      - name: fixtures
+      - name: teams
+      - name: fixtures_players
+
+  

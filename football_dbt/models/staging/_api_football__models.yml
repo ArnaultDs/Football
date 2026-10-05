@@ -1,0 +1,74 @@
+models:
+  - name: stg_api_football__leagues
+    description: "Leagues extracted from api, one row per league per year per payload"
+    data_tests: 
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [league_id, season_year, source_file]
+    columns:
+      - name: league_id
+        data_tests: [not_null]
+      - name: api_extracted_at
+        data_tests: [not_null]
+
+  - name: stg_api_football__teams
+    description: "Teams extracted from api, one row per team per payload - all version (no dedup)"
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [team_id, source_file]
+    columns:
+      - name: team_id
+        data_tests: [not_null]
+      - name: api_extracted_at
+        data_tests: [not_null]
+  
+  - name: stg_api_football__fixtures
+    description: "Fixtures extracted from api, one row per fixture per payload - all version (no dedup)"
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [fixture_id, source_file]
+    columns:
+      - name: fixture_id
+        data_tests: [not_null]
+      - name: kickoff_at
+        data_tests: [not_null]
+      - name: home_team_id
+        data_tests: [not_null]
+      - name: away_team_id
+        data_tests: [not_null]
+      - name: api_extracted_at
+        data_tests: [not_null]
+      - name: status_code
+        data_tests:
+          - not_null
+          - accepted_values: 
+              arguments:
+                values: [
+                  'TBD', 'NS', '1H', 'HT', '2H', 'ET', 'BT', 'P', 'SUSP', 'INT', 
+                  'FT', 'AET', 'PEN', 'PST', 'CANC', 'ABD', 'AWD', 'WO', 'LIVE'
+                ]
+              config:
+                severity: warn
+
+  - name: stg_api_football__players_stats
+    description: "Players statistics extracted from api, one row per player per fixture(payload) - all version (no dedup)"
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [fixture_id, player_id, source_file]
+      - dbt_utils.expression_is_true:
+          arguments: 
+            expression: "passes_accurate <= passes_total"
+    columns:
+      - name: fixture_id
+        data_tests: [not_null]
+      - name: team_id
+        data_tests: [not_null]
+      - name: player_id
+        data_tests: [not_null]
+      - name: api_extracted_at
+        data_tests: [not_null]
+
+    

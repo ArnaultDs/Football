@@ -4,6 +4,8 @@ Plateforme data de bout en bout sur les données du football français (Ligue 1)
 
 L'objectif n'est pas seulement de produire un classement : c'est de traiter les vrais problèmes d'un pipeline de production — quota d'API limité, rejouabilité, idempotence, historisation, qualité des données — avec des choix d'architecture **pragmatiques et justifiés**.
 
+![Dashboard du classement](docs/images/dashboard-classement.png)
+
 ---
 
 ## Sommaire

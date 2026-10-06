@@ -8,5 +8,6 @@ sources:
       - name: fixtures
       - name: teams
       - name: fixtures_players
+      - name: fixtures_rounds
 
   

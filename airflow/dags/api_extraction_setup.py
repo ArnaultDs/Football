@@ -12,9 +12,10 @@ def setup(season: int = 2026, league: int = 61):
     @task
     def build_setup_requests(league: int, season: int) -> list[dict[str, Any]]: 
         return [
-            {"endpoint": "leagues", "league": league, "season": season}, 
-            {"endpoint": "teams", "league": league, "season": season}, 
-            {"endpoint": "fixtures", "league": league, "season": season}
+            #{"endpoint": "leagues", "league": league, "season": season}, 
+            #{"endpoint": "teams", "league": league, "season": season}, 
+            #{"endpoint": "fixtures", "league": league, "season": season},
+            {"endpoint": "fixtures/rounds", "league": league, "season": season}
         ]
 
     endpoint_requests = build_setup_requests(league=league, season=season)

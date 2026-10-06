@@ -10,9 +10,7 @@ dependencies = [
     "pydantic-settings>=2",
     "requests>=2",
     "sqlalchemy>=2",
-    "alembic",
-    "dbt-core~=1.11.0",
-    "dbt-postgres~=1.11.0",
+    "alembic"
 ]
 
 [dependency-groups]

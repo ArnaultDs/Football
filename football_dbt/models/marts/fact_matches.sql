@@ -8,25 +8,15 @@
 }}
 
 with source as (
-    select *
-    from {{ ref('stg_api_football__fixtures') }}
+    select * 
+    from {{ref("int_fixtures__latest")}}
     {% if is_incremental() %}
-    where loaded_at > (select coalesce(max(raw_loaded_at), '1900-01-01') from {{ this }})
+    where updated_at > (select coalesce(max(int_loaded_at), '1900-01-01') from {{this}})
     {% endif %}
-),
-
-dedup as (
-
-    select *, row_number() over(partition by fixture_id order by api_extracted_at desc, loaded_at desc) rn
-    from source
-),
-
-latest_in_batch as (
-
-    select * from dedup where rn = 1
 )
 
 select 
+    {{ dbt_utils.generate_surrogate_key(['league_id', 'season_year']) }} as league_season_hash,
     fixture_id,
     kickoff_at,
     first_half_started_at,
@@ -59,24 +49,14 @@ select
     away_score_extratime,
     home_score_penalty,
     away_score_penalty,
-    case 
-        when status_code in ('FT', 'AET', 'PEN') THEN 1
-        else 0 
-    end as is_finished,
     extract_param_league,
     extract_param_season,
     source_file,
-    loaded_at as raw_loaded_at,
+    updated_at as int_loaded_at,
     api_extracted_at,
     {{ current_timestamp() }} as inserted_at,
     {{ current_timestamp() }} as updated_at
-from latest_in_batch as b
-{% if is_incremental() %}
-where not exists(
-    select 1
-    from {{ this }} as t
-    where t.fixture_id = b.fixture_id
-        and t.api_extracted_at > b.api_extracted_at
-)
-{% endif %}
+from source as b
+
+
 

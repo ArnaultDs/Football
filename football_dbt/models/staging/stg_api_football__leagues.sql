@@ -16,7 +16,7 @@ flattened as (
         se.season_block
     from source as s
     cross join lateral jsonb_array_elements(s.payload -> 'response') as l(league_block)
-    cross join lateral jsonb_array_elements(l.league_block -> 'season') as se(season_block)
+    cross join lateral jsonb_array_elements(l.league_block -> 'seasons') as se(season_block)
 )
 
 

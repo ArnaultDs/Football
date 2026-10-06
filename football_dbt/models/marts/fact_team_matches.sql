@@ -7,57 +7,21 @@
     )
 }}
 
-with source as (
 
+with source as (
     select * 
-    from {{ ref("int_fixtures__latest") }}
+    from {{ ref("int_team_matches__unpivoted") }}
     {% if is_incremental() %}
     where updated_at > (select coalesce(max(int_updated_at), '1900-01-01') from {{ this }})
     {% endif %}
-), 
 
-sides as (
-    select 
-        fixture_id,
-        round_number,
-        status_code,
-        home_team_id as team_id, 
-        home_team_name as team_name,
-        is_home_winner as is_winner,
-        home_goals as scored,
-        away_goals as conceded,
-        'home' as side,
-        updated_at
-    from source
-
-    union all 
-    select 
-        fixture_id,
-        round_number,
-        status_code,
-        away_team_id as team_id, 
-        away_team_name as team_name,
-        is_away_winner as is_winner,
-        away_goals as scored,
-        home_goals as conceded,
-        'away' as side,
-        updated_at
-    from source
-), 
-
-finished as (
-
-    select 
-        *, 
-        case 
-            when status_code in ('FT', 'AET', 'PEN') THEN 1
-            else 0 
-        end as is_finished
-    from sides
 )
 
 
 select 
+    {{ dbt_utils.generate_surrogate_key(['league_id', 'season_year']) }} as league_season_hash,
+    league_id, 
+    season_year, 
     fixture_id,
     round_number,
     team_id, 
@@ -66,29 +30,22 @@ select
     scored,
     conceded,
     case 
-        when is_finished = 1 THEN 
-            case 
-                when scored > conceded then 'W'
-                when scored = conceded then 'D'
-                else 'L'
-            end 
+        when scored > conceded then 'W'
+        when scored = conceded then 'D'
+        else 'L'
     end as result,
-    case 
-        when is_finished = 1 THEN
-            case
-                when scored > conceded then 3
-                when scored = conceded then 1
-                else 0
-            end
-        else null
+    case
+        when scored > conceded then 3
+        when scored = conceded then 1
+        else 0
     end as points,
     case 
-        when is_finished=1 and scored > conceded then 
+        when scored > conceded then 
             case 
                 when side = 'home' then 'home_victory'
                 when side = 'away' then 'away_victory'
             end
-        when is_finished=1 and scored = conceded then 'draw'
+        when scored = conceded then 'draw'
         else NULL
     end as match_outcomes,
     is_finished, 
@@ -96,4 +53,4 @@ select
     updated_at as int_updated_at, 
     {{ current_timestamp() }} as inserted_at,
     {{ current_timestamp() }} as updated_at
-from finished
+from source

@@ -12,7 +12,7 @@ with source as (
     select * 
     from {{ref('int_teams__versions')}}
     {% if is_incremental() %}
-    where updated_at > (select coalesce(max(raw_loaded_at), '1900-01-01') from {{ this }})
+    where raw_loaded_at > (select coalesce(max(raw_loaded_at), '1900-01-01') from {{ this }})
     {% endif %}
 ),
 

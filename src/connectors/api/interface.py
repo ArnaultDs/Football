@@ -53,6 +53,18 @@ class FixtureInterface(InterfaceBase):
     @property
     def partitions(self) -> str: 
         return f"{self.endpoint}/league={self.league}/season={self.season}"
+
+class RoundInterface(InterfaceBase):
+
+    endpoint: Literal["fixtures/rounds"] = Field(default="fixtures/rounds", exclude=True)
+
+    league: int
+    season: int
+
+    @property
+    def partitions(self) -> str: 
+        return f"{self.endpoint}/league={self.league}/season={self.season}"
+
     
 
 class TeamInterface(InterfaceBase): 
@@ -83,7 +95,7 @@ class FixtureStatisticsInterface(InterfaceBase):
 
 
 ApiInterface = Annotated[
-    Union[LeagueInterface, FixtureInterface, TeamInterface, FixtureStatisticsInterface],
+    Union[LeagueInterface, FixtureInterface, TeamInterface, FixtureStatisticsInterface, RoundInterface],
     Field(discriminator="endpoint")
 ]
 

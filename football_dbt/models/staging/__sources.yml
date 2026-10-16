@@ -3,6 +3,11 @@ version: 2
 sources: 
   - name: raw
     schema: raw
+    loaded_at_field: loaded_at
+    config:
+      freshness:
+        warn_after: {count: 10, period: day}
+        error_after: {count: 30, period: day}
     tables: 
       - name: leagues
       - name: fixtures

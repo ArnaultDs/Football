@@ -1,0 +1,102 @@
+version: 2
+
+models:
+  - name: dim_teams
+    description: >
+      Dimension équipes : une ligne par équipe, avec ses attributs et son stade
+      dans leur version la plus récente. Alimentée en incrémental (MERGE sur team_id)
+      depuis int_teams__versions, en ne gardant que la version courante.
+    config:
+      contract:
+        enforced: true
+      on_schema_change: fail
+    columns:
+      - name: team_id
+        description: "Identifiant de l'équipe dans l'API-Football. Clé primaire de la dimension."
+        data_type: bigint
+        constraints:
+          - type: not_null
+          - type: primary_key
+        data_tests:
+          - unique
+          - not_null
+
+      - name: team_name
+        description: "Nom de l'équipe, espaces superflus retirés."
+        data_type: text
+        data_tests:
+          - not_null
+
+      - name: team_code
+        description: "Code court de l'équipe (ex. PSG, OM). Peut être nul si l'API ne le fournit pas."
+        data_type: text
+
+      - name: team_country
+        description: "Pays de rattachement de l'équipe."
+        data_type: text
+
+      - name: founded_year
+        description: "Année de fondation du club."
+        data_type: smallint
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 1850
+                max_value: 2030
+              config:
+                severity: warn
+
+      - name: is_national
+        description: "Vrai pour une sélection nationale, faux pour un club."
+        data_type: boolean
+        data_tests:
+          - not_null
+
+      - name: team_logo_url
+        description: "URL du logo de l'équipe."
+        data_type: text
+
+      - name: venue_id
+        description: "Identifiant API du stade principal de l'équipe."
+        data_type: bigint
+
+      - name: venue_name
+        description: "Nom du stade principal."
+        data_type: text
+
+      - name: venue_city
+        description: "Ville du stade."
+        data_type: text
+
+      - name: venue_address
+        description: "Adresse du stade."
+        data_type: text
+
+      - name: venue_surface
+        description: "Type de pelouse (naturelle, synthétique, etc.)."
+        data_type: text
+
+      - name: venue_capacity
+        description: "Capacité du stade, en nombre de places."
+        data_type: integer
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                inclusive: true
+
+      - name: raw_loaded_at
+        description: >
+          Horodatage de chargement en couche raw de la version retenue.
+          Sert de watermark pour le chargement incrémental.
+        data_type: timestamp with time zone
+        data_tests:
+          - not_null
+
+      - name: inserted_at
+        description: "Date d'insertion de la ligne dans la dimension (conservée lors des MERGE)."
+        data_type: timestamp with time zone
+
+      - name: updated_at
+        description: "Date de dernière mise à jour de la ligne par dbt."
+        data_type: timestamp with time zone

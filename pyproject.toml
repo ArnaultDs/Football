@@ -10,11 +10,13 @@ dependencies = [
     "pydantic-settings>=2",
     "requests>=2",
     "sqlalchemy>=2",
-    "alembic"
+    "alembic", 
+    "pendulum",
 ]
 
 [dependency-groups]
 dev = ["apache-airflow==3.3.0"]   # même version que l'image
+test = ["pytest>=8", "ruff"]
 
 [build-system]
 requires = ["setuptools>=68"]

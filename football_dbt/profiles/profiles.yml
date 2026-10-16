@@ -4,8 +4,8 @@ football_dbt:                  # doit correspondre à profile: dans dbt_project.
   outputs:
     prod:
       type: postgres
-      host: postgres           # nom du service Postgres dans le docker-compose
-      port: 5432               # port interne, pas celui exposé sur ton Mac
+      host: "{{ env_var('POSTGRES_HOST', 'postgres') }}"           
+      port: "{{ env_var('POSTGRES_PORT', '5432') | int }}"               
       user: "{{ env_var('POSTGRES_USER') }}"
       pass: "{{ env_var('POSTGRES_PASSWORD') }}"
       dbname: "{{ env_var('POSTGRES_DB') }}"

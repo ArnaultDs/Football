@@ -1,8 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends, Query
 from typing import Annotated
 from sqlalchemy.orm import Session
-from sqlalchemy import select, update
-from datetime import date
+from sqlalchemy import select
 
 from api.deps import get_db
 from api.schemas.rate_limit import RateLimitResponse

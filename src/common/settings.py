@@ -1,7 +1,19 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from enum import Enum
+
+class Mode(str, Enum): 
+    DEBUG = "debug"
+    TEST = "test"
+    PRODUCTION = "production"
+
 
 class Settings(BaseSettings): 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
+    # Api
+    app_name: str = "finance-api"
+    version: str = "0.0.1"
+    mode: Mode = Mode.DEBUG 
 
     # RapidApi
     rapid_api_base_url: str

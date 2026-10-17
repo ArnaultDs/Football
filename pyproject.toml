@@ -10,8 +10,10 @@ dependencies = [
     "pydantic-settings>=2",
     "requests>=2",
     "sqlalchemy>=2",
-    "alembic", 
+    "alembic",
     "pendulum",
+    "pytest>=9.1.1",
+    "fastapi>=0.136.3",
 ]
 
 [dependency-groups]

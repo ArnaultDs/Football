@@ -18,10 +18,10 @@ def get_players_profile_todo(limit: int = 10) -> list[dict[str, Any]]:
 
 def get_fixtures_played_by_date(run_date: Date | None = None) -> list[dict[str, Any]]: 
 
-    stmt = f"select distinct(id) as fixture_id from marts.fixtures where 1=1"
+    stmt = f"select distinct(fixture_id) as fixture_id from marts.fact_matches where 1=1"
 
     if run_date: 
-        stmt = f"{stmt} and game_date = '{run_date}'"
+        stmt = f"{stmt} and kickoff_at::date = '{run_date}'"
 
     connector = DatabaseConnector()
     return connector.read(stmt)

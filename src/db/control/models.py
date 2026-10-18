@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy import func, DateTime, BIGINT, UniqueConstraint, Identity, text
+from sqlalchemy import func, DateTime, BIGINT, UniqueConstraint, Identity, text, String
 from sqlalchemy.dialects.postgresql import JSONB
 from datetime import datetime
 from typing import Any
@@ -63,3 +63,15 @@ class DbtManifestInstance(Base):
     dbt_ingested_at: Mapped[datetime|None] = mapped_column(DateTime(timezone=True)) 
     attemps: Mapped[int] = mapped_column(default=0, server_default=text("0::int"))
     last_error: Mapped[str|None] = mapped_column(default=None, nullable=True)
+
+
+class ApiKeyInstance(Base): 
+    __tablename__ = "api_key"
+    __table_args__ = {"schema": "ctl"}
+
+    id: Mapped[int] = mapped_column(BIGINT, Identity(), primary_key=True)
+    name: Mapped[str]
+    key_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    is_active: Mapped[bool] = mapped_column(default=True)
+    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+    last_used_at: Mapped[datetime | None]

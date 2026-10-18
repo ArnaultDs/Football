@@ -78,10 +78,6 @@ class TeamInterface(InterfaceBase):
     def partitions(self) -> str: 
         return f"{self.endpoint}/league={self.league}/season={self.season}"
 
-    @property
-    def file_name(self) -> str: 
-        return f"{self.endpoint}_p{str(self.page).zfill(4)}"
-
 class FixtureStatisticsInterface(InterfaceBase):
     endpoint: Literal["fixtures/players"] = Field(default="fixtures/players", exclude=True)
 

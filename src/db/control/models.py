@@ -47,7 +47,7 @@ class ApiExtractionManifestInstance(Base):
     )
     dag_name: Mapped[str]
     attemps: Mapped[int] = mapped_column(default=0, server_default=text("0::int"))
-    last_error: Mapped[str|None] = mapped_column(default=None, nullable=True)
+    last_error: Mapped[str|None] = mapped_column(server_default=None, nullable=True)
 
 class DbtManifestInstance(Base): 
     __tablename__ = "dbt_manifest"
@@ -63,7 +63,7 @@ class DbtManifestInstance(Base):
     dbt_ingested_status: Mapped[str] = mapped_column(default="pending")
     dbt_ingested_at: Mapped[datetime|None] = mapped_column(DateTime(timezone=True)) 
     attemps: Mapped[int] = mapped_column(default=0, server_default=text("0::int"))
-    last_error: Mapped[str|None] = mapped_column(default=None, nullable=True)
+    last_error: Mapped[str|None] = mapped_column(server_default=None, nullable=True)
 
 
 class ApiKeyInstance(Base): 
@@ -72,8 +72,9 @@ class ApiKeyInstance(Base):
 
     id: Mapped[int] = mapped_column(BIGINT, Identity(), primary_key=True)
     name: Mapped[str]
+    scope: Mapped[str] = mapped_column(server_default=text("'read'"))
     key_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
-    is_active: Mapped[bool] = mapped_column(default=True)
+    is_active: Mapped[bool] = mapped_column(server_default=text("false"))
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
     last_used_at: Mapped[datetime | None]
 
@@ -105,5 +106,29 @@ class TaskRunInstance(Base):
     ended_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True)) 
     error_type: Mapped[str | None]
     error_message: Mapped[str | None]
-    metrics: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=text("'{}'::jsonb"))
+    metrics: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, server_default=text("'{}'::jsonb"))
     recorded_at: Mapped[datetime] = mapped_column(server_default=func.now())
+
+class ApiName(str, Enum):
+    RAPID_API = "rapid_api"
+    FOOTBALL_API = "football_api"
+
+_API_NAMES = ", ".join(f"'{a.value}'" for a in ApiName)
+
+
+class SeasonRefInstance(Base):
+    __tablename__ = "season_ref"
+    __table_args__ = (
+        CheckConstraint(f"api_name in ({_API_NAMES})", name="ck_season_ref_api_name"),
+        {"schema": "ctl"},
+    )
+    id: Mapped[int] = mapped_column(BIGINT, Identity(), primary_key=True)
+    league_id: Mapped[int]
+    season: Mapped[int]
+    api_name: Mapped[str] = mapped_column(String(20))
+    is_active: Mapped[bool] = mapped_column(server_default=text("true"))
+    backfill_enabled: Mapped[bool] = mapped_column(server_default=text("false"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )

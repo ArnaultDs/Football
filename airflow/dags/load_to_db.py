@@ -40,7 +40,7 @@ def load_to_db():
                 api_extracted_at=api_extracted_at
             )
         except Exception as e: 
-            logger.error("An error has occured while loading to db: %s", str(e))
+            logger.exception("An error has occured while loading to db: %s", str(e))
             ApiExtractionManifest().failed(path, str(e))
             raise
 

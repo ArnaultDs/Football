@@ -10,8 +10,6 @@ import logging
 from common.postgres import SessionLocal
 from db.control.models import TaskRunInstance
 
-task = TaskRunInstance
-
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +36,7 @@ def write_task_run(record: TaskRunRecord, session: sessionmaker[Session] | None 
     session_factory = session or SessionLocal
 
     stmt = (
-        insert(task)
+        insert(TaskRunInstance)
         .values(
             record.model_dump()
         )

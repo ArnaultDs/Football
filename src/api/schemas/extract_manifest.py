@@ -10,7 +10,7 @@ class ExtractManifestResponse(BaseModel):
     page_number: int
     location: str
     ingested_status: str 
-    ingested_at: datetime
+    ingested_at: datetime | None = None
     api_extracted_at: datetime
     dag_name: str
     attemps: int

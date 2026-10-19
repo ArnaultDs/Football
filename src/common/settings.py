@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     # Api
-    app_name: str = "finance-api"
+    app_name: str = "football-control-pane"
     version: str = "0.0.1"
     mode: Mode = Mode.DEBUG 
 

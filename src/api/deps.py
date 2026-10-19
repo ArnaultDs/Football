@@ -43,5 +43,5 @@ def get_api_key(
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid API key")
 
     api_key.last_used_at = datetime.now(UTC)
-    db.commit()
+
     return api_key

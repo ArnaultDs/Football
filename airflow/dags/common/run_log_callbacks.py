@@ -3,6 +3,7 @@ from datetime import datetime, UTC
 import logging
 
 from observability.run_log import TaskRunRecord, write_task_run, MAX_ERROR_LENGTH
+from db.control.models import TaskRunStatus
 
 logger = logging.getLogger(__name__)
 
@@ -31,21 +32,21 @@ def record_success(context: Context) -> None:
 
     ti = context["ti"] #type: ignore
     try: 
-        write_task_run(_to_record(context, "success"))
+        write_task_run(_to_record(context, TaskRunStatus.SUCCESS))
     except: 
         logger.exception("run log write failed dag_id=%s task_id=%s", ti.dag_id, ti.task_id)
 
 def record_failure(context: Context) -> None:
     ti = context["ti"] #type: ignore
     try: 
-        write_task_run(_to_record(context, "failed"))
+        write_task_run(_to_record(context, TaskRunStatus.FAILED))
     except: 
         logger.exception("run log write failed dag_id=%s task_id=%s", ti.dag_id, ti.task_id)
 
 def record_retry(context: Context) -> None:
     ti = context["ti"] #type: ignore
     try: 
-        write_task_run(_to_record(context, "up_for_retry"))
+        write_task_run(_to_record(context, TaskRunStatus.UP_FOR_RETRY))
     except: 
         logger.exception("run log write failed dag_id=%s task_id=%s", ti.dag_id, ti.task_id)
 

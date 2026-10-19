@@ -10,7 +10,7 @@ from db.control.models import RapidApiLimiterInstance
 rate_limiter_router = APIRouter()
 
 @rate_limiter_router.get("/rate-limits", tags=["rate-limits"])
-def list_reate_limit(
+def list_rate_limit(
     db: Annotated[Session, Depends(get_db)],
     skip: Annotated[int, Query(ge=0)] = 0,
     limit: Annotated[int, Query(ge=1, le=100)] = 20

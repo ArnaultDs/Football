@@ -10,7 +10,7 @@ from db.control.models import ApiExtractionManifestInstance
 extraction_manifest_router = APIRouter()
 
 @extraction_manifest_router.get("/extraction-manifest", tags=["extraction-manifest"])
-def list_reate_limit(
+def list_extraction_manifest(
     db: Annotated[Session, Depends(get_db)],
     skip: Annotated[int, Query(ge=0)] = 0,
     limit: Annotated[int, Query(ge=1, le=100)] = 20

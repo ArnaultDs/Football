@@ -9,11 +9,13 @@ from db.control.manifest import DbtManifest
 from connectors.storage.minio_storage import MinioConnector
 from connectors.database.database_storage import DatabaseConnector
 
+from common.run_log_callbacks import RUN_LOG_CALLBACKS
+
 
 
 logger = getLogger(__name__)
 
-@dag(schedule="0 * * * *", catchup=False)
+@dag(schedule="0 * * * *", catchup=False, default_args=RUN_LOG_CALLBACKS)
 def load_to_db(): 
 
     @task
@@ -40,13 +42,13 @@ def load_to_db():
         except Exception as e: 
             logger.error("An error has occured while loading to db: %s", str(e))
             ApiExtractionManifest().failed(path, str(e))
-            return None
+            raise
 
         ApiExtractionManifest().succeeded(path)
         DbtManifest().create(table_name, pendulum.now(tz="Europe/Paris"))
 
 
-    @task(outlets=[raw_updated])
+    @task(outlets=[raw_updated], trigger_rule="one_success")
     def mark_raw_updated() -> None: 
         pass
 

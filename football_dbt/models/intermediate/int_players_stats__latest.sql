@@ -75,7 +75,8 @@ select
     {{ current_timestamp() }} as updated_at
 from latest_in_batch as b
 {% if is_incremental() %}
-where exists(
+-- avoid updating oldest rows
+where not exists(
     select 1
     from {{ this }} as t
     where t.fixture_id = b.fixture_id

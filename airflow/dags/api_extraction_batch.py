@@ -8,11 +8,13 @@ from logging import getLogger
 from connectors.database.queries import get_fixtures_played_by_date
 from common.api_extraction_task import extract_from_api_load_to_minio
 
+from common.run_log_callbacks import RUN_LOG_CALLBACKS
+
 
 logger = getLogger(__name__)
 
 
-@dag(schedule="0 2 * * 5-1", catchup=False)
+@dag(schedule="0 2 * * 5-1", catchup=False, default_args=RUN_LOG_CALLBACKS)
 def weekend_batch(season: int = 2026, league: int = 61) -> None: 
 
     @task

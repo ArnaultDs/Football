@@ -43,10 +43,15 @@ class RateLimiter:
 
         now = datetime.now(timezone.utc)
 
-        if result is None or now >= result.window_reset_at: 
-            return now 
+        if result is None: 
+            return now.replace(hour=0, minute=0, second=0, microsecond=0)
 
-        return result.window_start
+        if now < result.window_reset_at: 
+            return result.window_start
+
+        days_elapsed = (now - result.window_reset_at) // timedelta(days=1)
+        return result.window_reset_at + timedelta(days=days_elapsed)
+
 
     def _ensure_window_is_created(self, window_start: datetime) -> None: 
         """
@@ -119,6 +124,9 @@ class RateLimiter:
         self._ensure_window_is_created(window_start)
         now = datetime.now(timezone.utc)
 
+        reset_at = now + timedelta(seconds=reset_seconds)
+        reset_at = (reset_at + timedelta(seconds=30)).replace(second=0, microsecond=0)
+
         stmt = (
             update(RapidApiLimiterInstance)
             .where(
@@ -127,8 +135,9 @@ class RateLimiter:
             )
             .values(
                 confirmed_count = RapidApiLimiterInstance.limit_total - remaining,
-                reserved_count = RapidApiLimiterInstance.limit_total - remaining,
-                window_reset_at = now + timedelta(seconds=reset_seconds),
+                reserved_count = func.greatest(RapidApiLimiterInstance.reserved_count,
+                               RapidApiLimiterInstance.limit_total - remaining),
+                window_reset_at = reset_at,
                 last_confirmed_at = now
             )
         )

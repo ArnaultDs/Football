@@ -4,9 +4,10 @@ from airflow.sdk import dag, task
 
 
 from common.api_extraction_task import extract_from_api_load_to_minio
+from common.run_log_callbacks import RUN_LOG_CALLBACKS
 
 
-@dag(schedule="0 4 * * 3#1", catchup=False)
+@dag(schedule="0 4 * * 3#1", catchup=False, default_args=RUN_LOG_CALLBACKS)
 def setup(season: int = 2026, league: int = 61): 
 
     @task

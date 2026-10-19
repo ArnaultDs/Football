@@ -88,6 +88,10 @@ class FixtureStatisticsInterface(InterfaceBase):
     @property
     def partitions(self) -> str: 
         return f"{self.endpoint}/league={self.league}/season={self.season}"
+    
+    @property
+    def file_name(self) -> str:
+        return f"fixture-{self.fixture}_extracted-{get_current_time_str()}_p{str(self.page).zfill(4)}"
 
 
 ApiInterface = Annotated[

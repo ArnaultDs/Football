@@ -1,8 +1,9 @@
 from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy import func, DateTime, BIGINT, UniqueConstraint, Identity, text, String
+from sqlalchemy import func, DateTime, BIGINT, CheckConstraint, UniqueConstraint, Identity, text, String
 from sqlalchemy.dialects.postgresql import JSONB
 from datetime import datetime
 from typing import Any
+from enum import Enum
 
 from common.postgres import Base
 
@@ -75,3 +76,34 @@ class ApiKeyInstance(Base):
     is_active: Mapped[bool] = mapped_column(default=True)
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
     last_used_at: Mapped[datetime | None]
+
+
+class TaskRunStatus(str, Enum): 
+    SUCCESS = "success"
+    FAILED = "failed"
+    UP_FOR_RETRY = "up_for_retry"
+
+_STATUS_VALUES = ", ".join(f"'{s.value}'" for s in TaskRunStatus)
+
+class TaskRunInstance(Base): 
+    __tablename__ = "task_run"
+    __table_args__ = (
+        UniqueConstraint("dag_id", "run_id", "task_id", "map_index", "try_number", name="uq_task_run"), 
+        CheckConstraint(f"status in ({_STATUS_VALUES})", name="ck_task_run_status"),
+        {"schema": "ctl"}
+
+    )
+
+    id: Mapped[int] = mapped_column(BIGINT, Identity(), primary_key=True)
+    dag_id: Mapped[str]
+    run_id: Mapped[str]
+    task_id: Mapped[str]
+    map_index: Mapped[int] = mapped_column(default=-1)
+    try_number: Mapped[int]
+    status: Mapped[str] = mapped_column()
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True)) 
+    ended_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True)) 
+    error_type: Mapped[str | None]
+    error_message: Mapped[str | None]
+    metrics: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=text("'{}'::jsonb"))
+    recorded_at: Mapped[datetime] = mapped_column(server_default=func.now())

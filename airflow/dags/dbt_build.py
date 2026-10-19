@@ -4,10 +4,11 @@ from common.assets import raw_updated
 from typing import Any
 
 from db.control.manifest import DbtManifest
+from common.run_log_callbacks import RUN_LOG_CALLBACKS
 
 DBT = "cd /opt/dbt/football_dbt && /home/airflow/dbt-venv/bin/dbt"
 
-@dag(schedule=[raw_updated], max_active_runs=1, catchup=False)
+@dag(schedule=[raw_updated], max_active_runs=1, catchup=False, default_args=RUN_LOG_CALLBACKS)
 def dbt_build():
 
     @task

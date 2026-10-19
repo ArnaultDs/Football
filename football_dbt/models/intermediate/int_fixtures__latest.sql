@@ -72,6 +72,7 @@ select
     {{ current_timestamp() }} as updated_at
 from latest_in_batch as b
 {% if is_incremental() %}
+-- avoid updating oldest rows
 where not exists(
     select 1
     from {{ this }} as t

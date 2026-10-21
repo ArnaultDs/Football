@@ -4,7 +4,7 @@ import pendulum
 import io
 import json
 
-from common.minio import s3_client
+from common.infra.s3_client import s3_client
 
 logger = getLogger(__name__)
 

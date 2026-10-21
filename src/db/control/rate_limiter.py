@@ -4,7 +4,7 @@ from sqlalchemy.dialects.postgresql import insert
 from datetime import datetime, timezone, timedelta
 
 from db.control.models import RapidApiLimiterInstance
-from common.postgres import SessionLocal
+from common.infra.postgres import SessionLocal
 
 
 class QuotaExhausted(Exception): 

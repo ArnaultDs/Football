@@ -4,7 +4,7 @@ from sqlalchemy.dialects.postgresql import JSONB
 from logging import getLogger
 import pendulum
 
-from common.postgres import engine
+from common.infra.postgres import engine
 
 logger = getLogger(__name__)
 class DatabaseConnector: 

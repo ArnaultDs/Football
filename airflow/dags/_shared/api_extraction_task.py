@@ -2,8 +2,8 @@ import pendulum
 from typing import Any
 from logging import getLogger
 from airflow.sdk import task, get_current_context
-from connectors.api.interface import api_interface
-from connectors.api.api import get_api_client
+from connectors.api.endpoints import api_interface
+from connectors.api.factory import get_api_client
 from connectors.storage.minio_storage import MinioConnector
 from db.control.manifest import ApiExtractionManifest
 

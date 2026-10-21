@@ -6,9 +6,8 @@ from logging import getLogger
 
 
 from connectors.database.queries import get_fixtures_played_by_date
-from common.api_extraction_task import extract_from_api_load_to_minio
-
-from common.run_log_callbacks import RUN_LOG_CALLBACKS
+from _shared.api_extraction_task import extract_from_api_load_to_minio
+from _shared.run_log_callbacks import RUN_LOG_CALLBACKS
 
 
 logger = getLogger(__name__)

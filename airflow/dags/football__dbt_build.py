@@ -1,10 +1,10 @@
 from airflow.sdk import dag, task
-from airflow.providers.standard.operators.bash import BashOperator
-from common.assets import raw_updated   
+from airflow.providers.standard.operators.bash import BashOperator 
 from typing import Any
 
 from db.control.manifest import DbtManifest
-from common.run_log_callbacks import RUN_LOG_CALLBACKS
+from _shared.run_log_callbacks import RUN_LOG_CALLBACKS
+from _shared.assets import raw_updated  
 
 DBT = "cd /opt/dbt/football_dbt && /home/airflow/dbt-venv/bin/dbt"
 

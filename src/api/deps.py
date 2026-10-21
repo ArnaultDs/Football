@@ -7,7 +7,7 @@ from datetime import UTC, datetime
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 
-from common.postgres import SessionLocal
+from common.infra.postgres import SessionLocal
 from db.control.models import ApiKeyInstance
 
 api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)

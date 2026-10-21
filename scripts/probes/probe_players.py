@@ -12,7 +12,7 @@ logging.basicConfig(level=logging.INFO, format="%(message)s")
 log = logging.getLogger(__name__)
 
 BASE_URL = os.environ.get("FOOTBALL_API_BASE_URL", "https://v3.football.api-sports.io")
-HEADERS = {"x-apisports-key": "bd908da75091262dc44e11b81d9609a2"}
+HEADERS = {"x-apisports-key": os.environ["X_APISPORTS_KEY"]}
 OUT = Path("tests/fixtures/api")
 
 

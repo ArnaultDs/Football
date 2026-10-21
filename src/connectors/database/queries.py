@@ -1,7 +1,7 @@
 from typing import Any
 from pendulum import Date
 
-from connectors.database.database_storage import DatabaseConnector
+from connectors.database.raw import DatabaseConnector
 
 def get_fixtures_to_do(limit: int = 10) -> list[dict[str, Any]]: 
     stmt = f"select id, league_id, league_season, api_name from ops.fixtures_statistics_todo limit {limit}"

@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import Any
 from enum import Enum
 
-from common.postgres import Base
+from common.infra.postgres import Base
 
 
 class RapidApiLimiterInstance(Base): 

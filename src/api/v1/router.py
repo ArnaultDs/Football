@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from common.settings import settings
+from common.config import settings
 from api.v1.routers.ctl.rate_limiter import rate_limiter_router
 from api.v1.routers.ctl.extraction_manifest import extraction_manifest_router
 

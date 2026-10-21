@@ -5,8 +5,8 @@ from sqlalchemy import pool
 
 from alembic import context
 
-from common.settings import settings
-from common.postgres import Base
+from common.config import settings
+from common.infra.postgres import Base
 
 from db.control.models import RapidApiLimiterInstance, ApiExtractionManifestInstance
 
@@ -59,7 +59,6 @@ def run_migrations_offline() -> None:
 
     """
     url = config.get_main_option("sqlalchemy.url")
-    print(url)
     context.configure(
         url=url,
         target_metadata=target_metadata,

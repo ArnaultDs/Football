@@ -1,4 +1,4 @@
-from common.settings import settings
+from common.config import settings
 from connectors.api.client import PageFetcher, ApiClient
 from connectors.api.rate_limited import RateLimitedClient
 from db.control.rate_limiter import RateLimiter

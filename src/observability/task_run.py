@@ -7,7 +7,7 @@ from sqlalchemy.dialects.postgresql import insert
 
 import logging
 
-from common.postgres import SessionLocal
+from common.infra.postgres import SessionLocal
 from db.control.models import TaskRunInstance
 
 

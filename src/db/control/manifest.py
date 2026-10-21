@@ -6,7 +6,7 @@ from typing import Any
 from abc import ABC
 
 from db.control.models import ApiExtractionManifestInstance, DbtManifestInstance
-from common.postgres import SessionLocal
+from common.infra.postgres import SessionLocal
 
 class Manifest(ABC): 
 

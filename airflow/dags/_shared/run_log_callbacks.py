@@ -2,7 +2,7 @@ from airflow.sdk import Context
 from datetime import datetime, UTC
 import logging
 
-from observability.run_log import TaskRunRecord, write_task_run, MAX_ERROR_LENGTH
+from observability.task_run import TaskRunRecord, write_task_run, MAX_ERROR_LENGTH
 from db.control.models import TaskRunStatus
 
 logger = logging.getLogger(__name__)

@@ -6,12 +6,12 @@ from typing import Any
 from abc import ABC
 
 from db.control.models import ApiExtractionManifestInstance, DbtManifestInstance
-from common.infra.postgres import SessionLocal
+from common.infra.postgres import get_session_factory
 
 class Manifest(ABC): 
 
     def __init__(self, session: sessionmaker | None = None) -> None: 
-        self._Session = session or SessionLocal
+        self._Session = session or get_session_factory()
 
     def _execute_statement(self, stmt) -> None: 
 

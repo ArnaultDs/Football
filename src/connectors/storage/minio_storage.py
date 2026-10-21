@@ -4,7 +4,7 @@ import pendulum
 import io
 import json
 
-from common.infra.s3_client import s3_client
+from common.infra.s3_client import get_s3_client
 
 logger = getLogger(__name__)
 
@@ -36,6 +36,8 @@ class MinioConnector:
         logger.info("Fetching '%s' to bucket '%s'", minio_key, self._bucket)
         data = json.dumps(payload).encode("utf-8")
 
+        s3_client = get_s3_client()
+
         s3_client.put_object(
             Bucket = self._bucket,
             Key = minio_key,
@@ -49,6 +51,8 @@ class MinioConnector:
     def read(self, key: str) -> dict[str, Any]: 
 
         logger.info("Pulling '%s' from bucket '%s'", key, self._bucket)
+        
+        s3_client = get_s3_client()
 
         response = s3_client.get_object(
             Bucket = self._bucket, 

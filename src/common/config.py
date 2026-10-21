@@ -1,19 +1,8 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from enum import Enum
-
-class Mode(str, Enum): 
-    DEBUG = "debug"
-    TEST = "test"
-    PRODUCTION = "production"
-
+from functools import cache
 
 class Settings(BaseSettings): 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
-
-    # Api
-    app_name: str = "football-control-pane"
-    version: str = "0.0.1"
-    mode: Mode = Mode.DEBUG 
 
     # RapidApi
     rapid_api_base_url: str
@@ -47,4 +36,6 @@ class Settings(BaseSettings):
 
 
 
-settings = Settings()  # pyright: ignore[reportCallIssue]
+@cache
+def get_settings() -> Settings: 
+    return Settings() # pyright: ignore[reportCallIssue]

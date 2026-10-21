@@ -7,7 +7,7 @@ from sqlalchemy.dialects.postgresql import insert
 
 import logging
 
-from common.infra.postgres import SessionLocal
+from common.infra.postgres import get_session_factory
 from db.control.models import TaskRunInstance
 
 
@@ -33,7 +33,7 @@ class TaskRunRecord(BaseModel):
 
 def write_task_run(record: TaskRunRecord, session: sessionmaker[Session] | None = None) -> None: 
 
-    session_factory = session or SessionLocal
+    session_factory = session or get_session_factory()
 
     stmt = (
         insert(TaskRunInstance)

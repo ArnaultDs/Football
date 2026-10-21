@@ -4,14 +4,14 @@ from sqlalchemy.dialects.postgresql import JSONB
 from logging import getLogger
 import pendulum
 
-from common.infra.postgres import engine
+from common.infra.postgres import get_engine
 
 logger = getLogger(__name__)
 class DatabaseConnector: 
 
     def __init__(self, current_engine: Engine | None = None) -> None: 
 
-        self._engine = current_engine or engine
+        self._engine = current_engine or get_engine()
 
     def create_table(self, table_name: str) -> None: 
 

@@ -1,9 +1,11 @@
-from common.config import settings
+from common.config import get_settings
 from connectors.api.client import PageFetcher, ApiClient
 from connectors.api.rate_limited import RateLimitedClient
 from db.control.rate_limiter import RateLimiter
 
 def rapid_api_client() -> PageFetcher: 
+    settings = get_settings()
+
     client = ApiClient(
         base_url=settings.rapid_api_base_url, 
         headers = {"x-rapidapi-key": settings.x_rapidapi_key, "x-rapidapi-host": settings.x_rapidapi_host}
@@ -13,6 +15,8 @@ def rapid_api_client() -> PageFetcher:
 
 
 def football_api_client() -> PageFetcher: 
+    settings = get_settings()
+    
     client = ApiClient(
         base_url=settings.football_api_base_url, 
         headers = {'x-apisports-key': settings.x_apisports_key}

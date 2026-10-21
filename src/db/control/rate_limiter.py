@@ -4,7 +4,7 @@ from sqlalchemy.dialects.postgresql import insert
 from datetime import datetime, timezone, timedelta
 
 from db.control.models import RapidApiLimiterInstance
-from common.infra.postgres import SessionLocal
+from common.infra.postgres import get_session_factory
 
 
 class QuotaExhausted(Exception): 
@@ -17,7 +17,7 @@ class RateLimiter:
     def __init__(self, api_name: str, session: sessionmaker | None = None) -> None: 
 
         self._api_name = api_name
-        self._Session = session or SessionLocal
+        self._Session = session or get_session_factory()
 
     def _window_session_start(self) -> datetime: 
         """

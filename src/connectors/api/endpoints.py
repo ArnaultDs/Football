@@ -8,20 +8,20 @@ def get_current_time_str() -> str:
     now = pendulum.now(tz="Europe/Paris")
     return now.strftime("%Y%m%d%H%M%S")
 
-class InterfaceBase(BaseModel): 
+class EndpointParams(BaseModel): 
     model_config = ConfigDict(extra="forbid")
 
     page: int = Field(default=1, exclude=True)
 
     @property
-    def params(self) -> dict[str, Any]: 
+    def query_params(self) -> dict[str, Any]: 
         return self.model_dump(exclude_none=True)
 
     @property
     def file_name(self) -> str: 
         return f"extracted-{get_current_time_str()}_p{str(self.page).zfill(4)}"
 
-class LeagueInterface(InterfaceBase): 
+class LeagueParams(EndpointParams): 
 
     endpoint: Literal["leagues"] = Field(default="leagues", exclude=True)
 
@@ -34,14 +34,14 @@ class LeagueInterface(InterfaceBase):
         return self.league
 
     @property
-    def partitions(self) -> str: 
+    def partition_path(self) -> str: 
 
         league = self.league or "all"
 
         return f"{self.endpoint}/league={league}/season={self.season}"
     
 
-class FixtureInterface(InterfaceBase): 
+class FixtureParams(EndpointParams): 
 
     endpoint: Literal["fixtures"] = Field(default="fixtures", exclude=True)
 
@@ -51,10 +51,10 @@ class FixtureInterface(InterfaceBase):
     date: str | None = Field(default=None)
 
     @property
-    def partitions(self) -> str: 
+    def partition_path(self) -> str: 
         return f"{self.endpoint}/league={self.league}/season={self.season}"
 
-class RoundInterface(InterfaceBase):
+class RoundParams(EndpointParams):
 
     endpoint: Literal["fixtures/rounds"] = Field(default="fixtures/rounds", exclude=True)
 
@@ -62,12 +62,12 @@ class RoundInterface(InterfaceBase):
     season: int
 
     @property
-    def partitions(self) -> str: 
+    def partition_path(self) -> str: 
         return f"{self.endpoint}/league={self.league}/season={self.season}"
 
     
 
-class TeamInterface(InterfaceBase): 
+class TeamParams(EndpointParams): 
     endpoint: Literal["teams"] = Field(default="teams", exclude=True)
     
     id: str | None = Field(default=None)
@@ -75,10 +75,10 @@ class TeamInterface(InterfaceBase):
     season: int
 
     @property
-    def partitions(self) -> str: 
+    def partition_path(self) -> str: 
         return f"{self.endpoint}/league={self.league}/season={self.season}"
 
-class FixtureStatisticsInterface(InterfaceBase):
+class FixtureStatisticsParams(EndpointParams):
     endpoint: Literal["fixtures/players"] = Field(default="fixtures/players", exclude=True)
 
     fixture: int
@@ -86,7 +86,7 @@ class FixtureStatisticsInterface(InterfaceBase):
     season: int = Field(exclude=True)
 
     @property
-    def partitions(self) -> str: 
+    def partition_path(self) -> str: 
         return f"{self.endpoint}/league={self.league}/season={self.season}"
     
     @property
@@ -94,9 +94,9 @@ class FixtureStatisticsInterface(InterfaceBase):
         return f"fixture-{self.fixture}_extracted-{get_current_time_str()}_p{str(self.page).zfill(4)}"
 
 
-ApiInterface = Annotated[
-    Union[LeagueInterface, FixtureInterface, TeamInterface, FixtureStatisticsInterface, RoundInterface],
+AnyEndpointParams = Annotated[
+    Union[LeagueParams, FixtureParams, TeamParams, FixtureStatisticsParams, RoundParams],
     Field(discriminator="endpoint")
 ]
 
-api_interface: TypeAdapter[ApiInterface] = TypeAdapter(ApiInterface)
+endpoint_params_adapter: TypeAdapter[AnyEndpointParams] = TypeAdapter(AnyEndpointParams)

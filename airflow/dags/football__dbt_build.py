@@ -2,7 +2,7 @@ from airflow.sdk import dag, task
 from airflow.providers.standard.operators.bash import BashOperator 
 from typing import Any
 
-from db.control.manifest import DbtManifest
+from db.control.manifest import DbtRunQueue
 from _shared.run_log_callbacks import RUN_LOG_CALLBACKS
 from _shared.assets import raw_updated  
 
@@ -13,7 +13,7 @@ def dbt_build():
 
     @task
     def claim() -> list[dict[str, Any]]: 
-        return DbtManifest().claim_pending()
+        return DbtRunQueue().list_pending()
 
     @task.short_circuit
     def has_pending(claimed: list[dict[str, Any]]) -> bool: 
@@ -28,12 +28,12 @@ def dbt_build():
     @task(trigger_rule="all_success")
     def mark_success(claimed: list[dict[str, Any]]): 
         for claim in claimed: 
-            DbtManifest().succeeded(claim["id"])
+            DbtRunQueue().mark_succeeded(claim["id"])
 
     @task(trigger_rule="one_failed")
     def mark_fail(claimed: list[dict[str, Any]]): 
         for claim in claimed: 
-            DbtManifest().failed(claim["id"], "dbt error")
+            DbtRunQueue().mark_failed(claim["id"], "dbt error")
 
     claimed = claim()
     built = build(claimed) #type: ignore

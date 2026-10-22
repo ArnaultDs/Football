@@ -1,44 +1,35 @@
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy import select, update, func, case
+from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy import select, update, func, case, Executable
 from sqlalchemy.dialects.postgresql import insert
 import pendulum
 from typing import Any
 from abc import ABC
 
-from db.control.models import ApiExtractionManifestInstance, DbtManifestInstance
+from db.control.models import ApiExtractionManifestInstance, DbtManifestInstance, ManifestStatus
 from common.infra.postgres import get_session_factory
 
-class Manifest(ABC): 
 
-    def __init__(self, session: sessionmaker | None = None) -> None: 
-        self._Session = session or get_session_factory()
-
-    def _execute_statement(self, stmt) -> None: 
-
-        with self._Session.begin() as session: 
-            session.execute(stmt)
-
-    def _execute_many_statement(self, stmts) -> None: 
-
-        with self._Session.begin() as session: 
-            for stmt in stmts:
-                session.execute(stmt)
+def _run_in_transaction(session_factory: sessionmaker[Session], *statements: Executable) -> None: 
+    with session_factory.begin() as session: 
+        for statement in statements: 
+            session.execute(statement)
 
 
-class ApiExtractionManifest(Manifest): 
+class ExtractionManifestRepository: 
 
     MAX_ATTEMPS = 3
 
-    def __init__(self, session: sessionmaker | None = None) -> None: 
+    def __init__(self, session: sessionmaker[Session] | None = None) -> None: 
 
-        super().__init__(session)
+        self._session = session or get_session_factory()
 
 
-    def create(
+    def register(
         self,
+        *,
         api_name: str,
         endpoint:str, 
-        paging: int, 
+        page: int, 
         extracted_at: pendulum.DateTime, 
         location:str, 
         params:dict[str, Any], 
@@ -51,7 +42,7 @@ class ApiExtractionManifest(Manifest):
             .values(
                 api_name = api_name, 
                 endpoint = endpoint, 
-                page_number = str(paging), 
+                page_number = page, 
                 api_extracted_at = extracted_at, 
                 location = location, 
                 params=params,
@@ -60,7 +51,7 @@ class ApiExtractionManifest(Manifest):
             .on_conflict_do_update(
                 index_elements=["location"], 
                 set_={
-                    "ingested_status": "pending",
+                    "ingested_status": ManifestStatus.PENDING,
                     "api_extracted_at": extracted_at, 
                     "params": params, 
                     "dag_name": dag_name
@@ -69,10 +60,10 @@ class ApiExtractionManifest(Manifest):
         )
 
         # execute insert statement
-        self._execute_statement(stmt)
+        _run_in_transaction(self._session, stmt)
 
 
-    def succeeded(self, location: str) -> None: 
+    def mark_succeeded(self, location: str) -> None: 
 
         # define update statement 
         stmt = (
@@ -89,9 +80,9 @@ class ApiExtractionManifest(Manifest):
         )
 
         # execute update statement
-        self._execute_statement(stmt)
+        _run_in_transaction(self._session, stmt)
 
-    def failed(self, location: str, error: str) -> None:
+    def mark_failed(self, location: str, error: str) -> None:
 
         # define update statement 
         stmt = (
@@ -100,20 +91,20 @@ class ApiExtractionManifest(Manifest):
                 ApiExtractionManifestInstance.location == location, 
             )
             .values(
-                attemps = ApiExtractionManifestInstance.attemps + 1,
+                attemps = ApiExtractionManifestInstance.attempts + 1,
                 last_error = error[:2000],
                 ingested_status = case(
-                    (ApiExtractionManifestInstance.attemps + 1 >= self.MAX_ATTEMPS, "failed"),
+                    (ApiExtractionManifestInstance.attempts + 1 >= self.MAX_ATTEMPS, "failed"),
                     else_="pending"
                 ),
             )
         )
 
         # execute update statement
-        self._execute_statement(stmt)
+        _run_in_transaction(self._session, stmt)
 
 
-    def claim_pending(self) -> list[dict[str, Any]]: 
+    def list_pending(self) -> list[dict[str, Any]]: 
 
         m = ApiExtractionManifestInstance
         # define select statement 
@@ -122,11 +113,11 @@ class ApiExtractionManifest(Manifest):
             .where(
                 m.ingested_status == "pending"
             )
-            .order_by(m.api_extracted_at.desc())
+            .order_by(m.api_extracted_at.asc())
         )
 
         # execute select statement and return 
-        with self._Session() as session: 
+        with self._session.begin() as session: 
             return [
                 {
                     "id": id, 
@@ -137,21 +128,21 @@ class ApiExtractionManifest(Manifest):
             ]
 
 
-class DbtManifest(Manifest): 
+class DbtRunQueue: 
 
     MAX_ATTEMPS = 3
 
-    def __init__(self, session: sessionmaker | None = None) -> None: 
+    def __init__(self, session: sessionmaker[Session] | None = None) -> None: 
 
-        super().__init__(session)
+        self._session = session or get_session_factory()
 
-    def create(self, table_name: str, ingested_at: pendulum.DateTime) -> None:
+    def enqueue(self, raw_table: str, ingested_at: pendulum.DateTime) -> None:
 
         # define update statement
         update_stmt = (
             update(DbtManifestInstance)
             .where(
-                DbtManifestInstance.raw_table_name == table_name,
+                DbtManifestInstance.raw_table_name == raw_table,
                 DbtManifestInstance.dbt_ingested_status == "pending",
             )
             .values(dbt_ingested_status="superseded")
@@ -159,15 +150,15 @@ class DbtManifest(Manifest):
 
         insert_stmt = (
             insert(DbtManifestInstance).values(
-                raw_table_name=table_name,
-                staging_table_name = f"stg_{table_name}",
+                raw_table_name=raw_table,
+                staging_table_name = f"stg_{raw_table}",
                 raw_ingested_at=ingested_at,
             )
         )
 
-        self._execute_many_statement([update_stmt, insert_stmt])
+        _run_in_transaction(self._session, update_stmt, insert_stmt)
 
-    def succeeded(self, manifest_id: int) -> None: 
+    def mark_succeeded(self, manifest_id: int) -> None: 
 
         # define update statement
         stmt = (
@@ -184,9 +175,9 @@ class DbtManifest(Manifest):
         )
 
         # execute update statement
-        self._execute_statement(stmt)
+        _run_in_transaction(self._session, stmt)
 
-    def failed(self, manifest_id: int, error: str) -> None: 
+    def mark_failed(self, manifest_id: int, error: str) -> None: 
 
         # define update statement 
         stmt = (
@@ -195,18 +186,18 @@ class DbtManifest(Manifest):
                 DbtManifestInstance.id == manifest_id
             )
             .values(
-                attemps = DbtManifestInstance.attemps + 1,
+                attemps = DbtManifestInstance.attempts + 1,
                 last_error = error[:2000],
                 dbt_ingested_status = case(
-                    (DbtManifestInstance.attemps + 1 >= self.MAX_ATTEMPS, "failed"),
+                    (DbtManifestInstance.attempts + 1 >= self.MAX_ATTEMPS, "failed"),
                     else_="pending"
                 ),
             )
         )
 
-        self._execute_statement(stmt)
+        _run_in_transaction(self._session, stmt)
 
-    def claim_pending(self) -> list[dict[str, Any]]:
+    def list_pending(self) -> list[dict[str, Any]]:
 
         m = DbtManifestInstance
 
@@ -219,7 +210,7 @@ class DbtManifest(Manifest):
         )
 
          # execute select statement and return 
-        with self._Session() as session: 
+        with self._session.begin() as session: 
             return [
                 {
                     "id": id, 

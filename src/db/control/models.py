@@ -3,12 +3,12 @@ from sqlalchemy import func, DateTime, BIGINT, CheckConstraint, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB
 from datetime import datetime
 from typing import Any
-from enum import Enum
+from enum import StrEnum
 
 from common.infra.postgres import Base
 
 
-class RapidApiLimiterInstance(Base): 
+class RateLimitWindowInstance(Base): 
     __tablename__ = "api_rate_limiter"
     __table_args__ = (
         UniqueConstraint("api_name", "window_start", name="uq_rate_limiter"), 
@@ -27,11 +27,19 @@ class RapidApiLimiterInstance(Base):
         server_default=func.now(), onupdate=func.now()
     )
 
+class ManifestStatus(StrEnum):
+    PENDING = "pending"
+    SUCCEEDED = "succeeded"
+    FAILED = "failed"
+
+_STATUS_MANIFEST_VALUES = ", ".join(f"'{s.value}'" for s in ManifestStatus)
+
 
 class ApiExtractionManifestInstance(Base): 
     __tablename__ = "api_extraction_manifest"
     __table_args__ = (
         UniqueConstraint("location", name="uq_extraction_manifest"), 
+        CheckConstraint(f"ingested_status in ({_STATUS_MANIFEST_VALUES})", name="ck_extraction_manifest_status"),
         {"schema": "ctl"}
     )
     id: Mapped[int] = mapped_column(BIGINT, Identity(), primary_key=True)
@@ -46,13 +54,23 @@ class ApiExtractionManifestInstance(Base):
         JSONB, nullable=False, server_default=text("'{}'::jsonb")
     )
     dag_name: Mapped[str]
-    attemps: Mapped[int] = mapped_column(default=0, server_default=text("0::int"))
+    attempts: Mapped[int] = mapped_column(default=0, server_default=text("0::int"))
     last_error: Mapped[str|None] = mapped_column(server_default=None, nullable=True)
+
+class DbtRunStatus(StrEnum):
+    PENDING = "pending"
+    SUPERSEDED = "superseded"
+    SUCCEEDED = "succeeded"
+    FAILED = "failed"
+
+_STATUS_DBT_VALUES = ", ".join(f"'{s.value}'" for s in DbtRunStatus)
+
 
 class DbtManifestInstance(Base): 
     __tablename__ = "dbt_manifest"
     __table_args__ = (
             UniqueConstraint("raw_table_name", "raw_ingested_at", name="uq_dbt_manifest"), 
+            CheckConstraint(f"dbt_ingested_status in ({_STATUS_DBT_VALUES})", name="ck_dbt_manifest_status"),
             {"schema": "ctl"}
         )
 
@@ -62,7 +80,7 @@ class DbtManifestInstance(Base):
     raw_ingested_at: Mapped[datetime|None] = mapped_column(DateTime(timezone=True)) 
     dbt_ingested_status: Mapped[str] = mapped_column(default="pending")
     dbt_ingested_at: Mapped[datetime|None] = mapped_column(DateTime(timezone=True)) 
-    attemps: Mapped[int] = mapped_column(default=0, server_default=text("0::int"))
+    attempts: Mapped[int] = mapped_column(default=0, server_default=text("0::int"))
     last_error: Mapped[str|None] = mapped_column(server_default=None, nullable=True)
 
 
@@ -79,18 +97,18 @@ class ApiKeyInstance(Base):
     last_used_at: Mapped[datetime | None]
 
 
-class TaskRunStatus(str, Enum): 
+class TaskRunStatus(StrEnum): 
     SUCCESS = "success"
     FAILED = "failed"
     UP_FOR_RETRY = "up_for_retry"
 
-_STATUS_VALUES = ", ".join(f"'{s.value}'" for s in TaskRunStatus)
+_STATUS_TASK_VALUES = ", ".join(f"'{s.value}'" for s in TaskRunStatus)
 
 class TaskRunInstance(Base): 
     __tablename__ = "task_run"
     __table_args__ = (
         UniqueConstraint("dag_id", "run_id", "task_id", "map_index", "try_number", name="uq_task_run"), 
-        CheckConstraint(f"status in ({_STATUS_VALUES})", name="ck_task_run_status"),
+        CheckConstraint(f"status in ({_STATUS_TASK_VALUES})", name="ck_task_run_status"),
         {"schema": "ctl"}
 
     )
@@ -109,7 +127,7 @@ class TaskRunInstance(Base):
     metrics: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, server_default=text("'{}'::jsonb"))
     recorded_at: Mapped[datetime] = mapped_column(server_default=func.now())
 
-class ApiName(str, Enum):
+class ApiName(StrEnum):
     RAPID_API = "rapid_api"
     FOOTBALL_API = "football_api"
 

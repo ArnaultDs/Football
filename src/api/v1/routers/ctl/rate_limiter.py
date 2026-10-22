@@ -5,19 +5,19 @@ from sqlalchemy import select
 
 from api.deps import get_db
 from api.schemas.rate_limit import RateLimitResponse
-from db.control.models import RapidApiLimiterInstance
+from db.control.models import RateLimitWindowInstance
 
 rate_limiter_router = APIRouter()
 
 @rate_limiter_router.get("/rate-limits", tags=["rate-limits"])
-def list_rate_limit(
+def list_rate_limits(
     db: Annotated[Session, Depends(get_db)],
     skip: Annotated[int, Query(ge=0)] = 0,
     limit: Annotated[int, Query(ge=1, le=100)] = 20
 ) -> list[RateLimitResponse]: 
 
     rate_limit_stmt = (
-        select(RapidApiLimiterInstance)
+        select(RateLimitWindowInstance)
         .offset(skip)
         .limit(limit)
     )
@@ -34,8 +34,8 @@ def get_rate_limit(
 ) -> RateLimitResponse: 
 
     rate_limit = db.execute(
-        select(RapidApiLimiterInstance)
-        .where(RapidApiLimiterInstance.id == rate_limit_id)
+        select(RateLimitWindowInstance)
+        .where(RateLimitWindowInstance.id == rate_limit_id)
     ).scalars().first()
 
     if not rate_limit: 

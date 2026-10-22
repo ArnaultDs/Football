@@ -2,10 +2,10 @@ import pendulum
 from typing import Any
 from logging import getLogger
 from airflow.sdk import task, get_current_context
-from connectors.api.endpoints import api_interface
+from connectors.api.endpoints import endpoint_params_adapter
 from connectors.api.factory import get_api_client
-from connectors.storage.minio_storage import MinioConnector
-from db.control.manifest import ApiExtractionManifest
+from connectors.storage.minio_storage import MinioStore
+from db.control.manifest import ExtractionManifestRepository
 
 
 logger = getLogger(__name__)
@@ -29,9 +29,9 @@ def extract_from_api_load_to_minio(
 
 
     # extract from api
-    interface = api_interface.validate_python(request)
+    interface = endpoint_params_adapter.validate_python(request)
     api_client = get_api_client(api_name)
-    response = api_client.fetch_page(interface.endpoint, interface.params)
+    response = api_client.fetch_page(interface.endpoint, interface.query_params)
 
     # Verify response
     if not response.has_data_in_response(): 
@@ -39,20 +39,20 @@ def extract_from_api_load_to_minio(
         return None
 
     # load to minio
-    minio_client = MinioConnector(bucket="bronze")
-    minio_path = minio_client.load(response.data, api_name, interface.file_name, interface.partitions, partition_date)
+    minio_client = MinioStore(bucket="bronze")
+    minio_path = minio_client.put_json(response.data, api_name, interface.file_name, interface.partition_path, partition_date)
 
     logger.info("Successfully extracted from api and loaded to minio")
 
     # create manifest control
-    manifest_client = ApiExtractionManifest()
-    manifest_client.create(
+    manifest_client = ExtractionManifestRepository()
+    manifest_client.register(
         api_name=api_name,
         endpoint=interface.endpoint,
-        paging=interface.page,
+        page=interface.page,
         extracted_at=pendulum.now(tz="Europe/Paris"),
         location=minio_path, 
-        params=interface.params,
+        params=interface.query_params,
         dag_name=ti.dag_id
     )
 

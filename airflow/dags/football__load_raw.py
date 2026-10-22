@@ -3,9 +3,9 @@ from typing import Any
 import pendulum
 from logging import getLogger
 
-from db.control.manifest import ApiExtractionManifest
-from db.control.manifest import DbtManifest
-from connectors.storage.minio_storage import MinioConnector
+from db.control.manifest import ExtractionManifestRepository
+from db.control.manifest import DbtRunQueue
+from connectors.storage.minio_storage import MinioStore
 from connectors.database.raw import DatabaseConnector
 
 from _shared.run_log_callbacks import RUN_LOG_CALLBACKS
@@ -20,7 +20,7 @@ def load_to_db():
 
     @task
     def get_pending_task() -> list[dict[str, Any]]: 
-        return ApiExtractionManifest().claim_pending()
+        return ExtractionManifestRepository().list_pending()
 
     @task 
     def load(task_to_load: dict[str, Any]) -> None: 
@@ -32,7 +32,7 @@ def load_to_db():
         table_name = endpoint.replace("/", "_")
 
         try: 
-            data = MinioConnector("bronze").read(path)
+            data = MinioStore("bronze").get_json(path)
             DatabaseConnector().load(
                 table_name=table_name,
                 source_file=path,
@@ -41,11 +41,11 @@ def load_to_db():
             )
         except Exception as e: 
             logger.exception("An error has occured while loading to db: %s", str(e))
-            ApiExtractionManifest().failed(path, str(e))
+            ExtractionManifestRepository().mark_failed(path, str(e))
             raise
 
-        ApiExtractionManifest().succeeded(path)
-        DbtManifest().create(table_name, pendulum.now(tz="Europe/Paris"))
+        ExtractionManifestRepository().mark_succeeded(path)
+        DbtRunQueue().enqueue(table_name, pendulum.now(tz="Europe/Paris"))
 
 
     @task(outlets=[raw_updated], trigger_rule="one_success")

@@ -3,9 +3,8 @@ from sqlalchemy import select, update, func
 from sqlalchemy.dialects.postgresql import insert
 from datetime import datetime, timezone, timedelta
 
-from db.control.models import RapidApiLimiterInstance
+from db.control.models import RateLimitWindowInstance
 from common.infra.postgres import get_session_factory
-
 
 class QuotaExhausted(Exception): 
     ...
@@ -31,10 +30,10 @@ class RateLimiter:
 
         stmt = (
             select(
-                RapidApiLimiterInstance.window_start, 
-                RapidApiLimiterInstance.window_reset_at)
-            .where(RapidApiLimiterInstance.api_name == self._api_name)
-            .order_by(RapidApiLimiterInstance.window_start.desc())
+                RateLimitWindowInstance.window_start, 
+                RateLimitWindowInstance.window_reset_at)
+            .where(RateLimitWindowInstance.api_name == self._api_name)
+            .order_by(RateLimitWindowInstance.window_start.desc())
             .limit(1)
         )
         
@@ -63,7 +62,7 @@ class RateLimiter:
         """
 
         stmt = (
-            insert(RapidApiLimiterInstance)
+            insert(RateLimitWindowInstance)
             .values(
                 api_name = self._api_name,
                 window_start = window_start,
@@ -93,14 +92,14 @@ class RateLimiter:
         self._ensure_window_is_created(window_start)
 
         stmt = (
-            update(RapidApiLimiterInstance)
+            update(RateLimitWindowInstance)
             .where(
-                RapidApiLimiterInstance.api_name == self._api_name, 
-                RapidApiLimiterInstance.window_start == window_start,
-                RapidApiLimiterInstance.reserved_count < RapidApiLimiterInstance.limit_total
+                RateLimitWindowInstance.api_name == self._api_name, 
+                RateLimitWindowInstance.window_start == window_start,
+                RateLimitWindowInstance.reserved_count < RateLimitWindowInstance.limit_total
             )
-            .values(reserved_count = RapidApiLimiterInstance.reserved_count + 1)
-            .returning(RapidApiLimiterInstance.reserved_count)
+            .values(reserved_count = RateLimitWindowInstance.reserved_count + 1)
+            .returning(RateLimitWindowInstance.reserved_count)
         )
 
         with self._Session.begin() as session: 
@@ -128,15 +127,15 @@ class RateLimiter:
         reset_at = (reset_at + timedelta(seconds=30)).replace(second=0, microsecond=0)
 
         stmt = (
-            update(RapidApiLimiterInstance)
+            update(RateLimitWindowInstance)
             .where(
-                RapidApiLimiterInstance.api_name == self._api_name, 
-                RapidApiLimiterInstance.window_start == window_start
+                RateLimitWindowInstance.api_name == self._api_name, 
+                RateLimitWindowInstance.window_start == window_start
             )
             .values(
-                confirmed_count = RapidApiLimiterInstance.limit_total - remaining,
-                reserved_count = func.greatest(RapidApiLimiterInstance.reserved_count,
-                               RapidApiLimiterInstance.limit_total - remaining),
+                confirmed_count = RateLimitWindowInstance.limit_total - remaining,
+                reserved_count = func.greatest(RateLimitWindowInstance.reserved_count,
+                               RateLimitWindowInstance.limit_total - remaining),
                 window_reset_at = reset_at,
                 last_confirmed_at = now
             )
